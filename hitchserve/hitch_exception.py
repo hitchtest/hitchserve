@@ -1,0 +1,2 @@
+class HitchException(Exception):
+    pass
