@@ -4,14 +4,78 @@ HitchServe
 HitchServe is a UNIX service orchestration library for the Hitch testing
 framework.
 
+Use
+===
+
+Install like so::
+
+    $ hitch install hitchserve
+
+.. code-block:: python
+
+        # Gets the directory above the file that this code is written in
+        PROJECT_DIRECTORY = path.join(path.dirname(__file__), '..')
+
+        # Specify an environment using HitchEnvironment_.
+        import hitchenvironment
+        environment = hitchenvironment.Environment("linux2", 64, False)
+
+        # Create a service bundle
+        self.services = hitchserve.ServiceBundle(
+            project_directory=PROJECT_DIRECTORY,
+            environment=environment,
+            startup_timeout=15.0,                       # How long to wait for all of the services to startup
+            shutdown_timeout=5.0,                       # How long to wait for all of the services to shutdown before killing
+        )
+
+        # [ DO SERVICE DEFINITIONS HERE ]
+        # See one of the following for examples:
+        # HitchCron_
+        # HitchSelenium_
+        # HitchRedis_
+        # HitchDjango_
+        # HitchPostgres_
+        # HitchCelery_
+
+        # Start services (use interactive=True if you run this command from IPython).
+        self.services.startup(interactive=True)
+
+        # Use interactive=False if you run this command in a test (this aggregate and output service logs):
+        self.services.startup(interactive=False)
+
+        # During the test you can pause the logging and launch into IPython:
+        self.services.pause()
+
+        # Or you can log a message to the logs
+        self.services.log("Message")
+
+        # Or you can log a warning message to the logs
+        self.serviecs.warn("Warning!")
+
+        # You can also make the services think that the system time has changed
+        self.services.time_travel(minutes=30)
+        self.services.time_travel(hours=30)
+        self.services.time_travel(days=30)
+
+        # Stop services
+        self.services.shutdown()
+
+
+
+Features
+========
+
+* Starts services in parallel and abstracts away the difficulties of writing multiprocess code.
+* Creates an easy way to 'listen' to the logs and trigger events.
+* Lets you interact with services and inspect their processes.
+* Handles all of the thorny UNIX process handling.
+* Aggregates the output of services and logs it all together for easy reading.
+
 
 Caveats and Known issues
 ========================
 
-* Libfaketime, which fakes the time has the following issues:
-** Does not work correctly with node.js
-** Does not work correctly with Java
-** Does not work on Windows
+* Faketime does not currently work with Firefox, node.js and Java services.
 
 * HitchServe has not been tested on Windows, Mac OS, BSD or Linux distributions
 other than Ubuntu 14.04.2 LTS (kernel version : 3.13.0-49.81). Please
@@ -32,3 +96,12 @@ Thanks
 
 Thanks to Wolfgang Hommel for the libfaketime library, which is used by
 HitchServe.
+
+
+.. _HitchEnvironment: https://github.com/hitchtest/hitchenvironment
+.. _HitchSMTP: https://github.com/hitchtest/hitchsmtp
+.. _HitchCron: https://github.com/hitchtest/hitchcron
+.. _HitchSelenium: https://github.com/hitchtest/hitchselenium
+.. _HitchRedis: https://github.com/hitchtest/hitchredis
+.. _HitchDjango: https://github.com/hitchtest/hitchdjango
+.. _HitchCelery: https://github.com/hitchtest/hitchcelery
