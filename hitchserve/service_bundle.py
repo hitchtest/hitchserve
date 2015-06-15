@@ -2,7 +2,6 @@ from hitch_dir import HitchDir
 from hitch_exception import HitchException
 from hitch_service import Service
 from test_engine import TestEngine
-from interactive import Interactive
 import faketime
 import multiprocessing
 import colorama
