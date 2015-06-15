@@ -65,8 +65,9 @@ class TestEngine(object):
         self.pipe_logfile = pyuv.Pipe(self.loop)
         self.pipe_logfile.open(self.logfile.fileno())
 
-        self.pipe_stdout = pyuv.Pipe(self.loop)
-        self.pipe_stdout.open(sys.stdout.fileno())
+        if not self.service_bundle.quiet:
+            self.pipe_stdout = pyuv.Pipe(self.loop)
+            self.pipe_stdout.open(sys.stdout.fileno())
 
         self.service_engine.start_services_without_prerequisites()
 
@@ -90,8 +91,9 @@ class TestEngine(object):
 
     def _close_pipes(self):
         """Close all the pipes in order to shut the engine down."""
-        if not self.pipe_stdout.closed:
-            self.pipe_stdout.close()
+        if not self.service_bundle.quiet:
+            if not self.pipe_stdout.closed:
+                self.pipe_stdout.close()
         for pipe in self.service_engine.pipes():
             if pipe is not None and not pipe.closed:
                 pipe.close()
@@ -113,7 +115,7 @@ class TestEngine(object):
             line,
             reset_all
         )
-        if not self.ipython_on:
+        if not self.ipython_on and not self.service_bundle.quiet:
             self.pipe_stdout.write(full_line)
         self.pipe_logfile.write(full_line)
 
@@ -155,7 +157,7 @@ class TestEngine(object):
 
         if not self.messages_to_bundle_engine.empty():
             msg = self.messages_to_bundle_engine.get()
-            if not self.pipe_stdout.closed and msg == "SHUTDOWN":
+            if not self._driver_sent_shutdown_signal and msg == "SHUTDOWN":
                 self._driver_sent_shutdown_signal = True
                 self.stop()
             if msg == "IPYTHONON":

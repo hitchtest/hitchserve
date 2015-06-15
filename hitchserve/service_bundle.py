@@ -20,14 +20,14 @@ import os
 
 
 # TODO : Allow stopping, starting, restarting and waiting until stop/start is finished.
-# TODO : Handle StringIO nose/py.test problem.
 
 class ServiceBundle(object):
-    def __init__(self, project_directory, environment, startup_timeout = 15.0, shutdown_timeout = 5.0):
+    def __init__(self, project_directory, environment, startup_timeout=15.0, shutdown_timeout=5.0, quiet=False):
         environment.match()
         self._shutdown_initiated = False
         self._abort = False
         self._services = {}
+        self.quiet = quiet
         self.timedelta = python_timedelta(0)
         self.project_directory = os.path.abspath(project_directory)
         self.hitch_dir = HitchDir(self.project_directory)
@@ -262,14 +262,6 @@ class ServiceBundle(object):
 
     def pstree(self):
         os.system("pstree -panl {}".format(os.getppid()))
-
-    def pause(self, functions_above=0, message=None):
-        """Pause a test and break into an IPython shell."""
-        # Get the frame to launch IPython into
-        frame = inspect.stack()[functions_above + 1][0]
-        self.start_interactive_mode()
-        Interactive().embed(frame, message)
-        self.stop_interactive_mode()
 
     def shutdown(self):
         if not self._shutdown_initiated:

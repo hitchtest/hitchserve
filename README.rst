@@ -13,6 +13,8 @@ Install like so::
 
 .. code-block:: python
 
+        import hitchtest
+
         # Gets the directory above the file that this code is written in
         PROJECT_DIRECTORY = path.join(path.dirname(__file__), '..')
 
@@ -29,13 +31,7 @@ Install like so::
         )
 
         # [ DO SERVICE DEFINITIONS HERE ]
-        # See one of the following for examples:
-        # HitchCron_
-        # HitchSelenium_
-        # HitchRedis_
-        # HitchDjango_
-        # HitchPostgres_
-        # HitchCelery_
+        # See below for an example.
 
         # Start services (use interactive=True if you run this command from IPython).
         self.services.startup(interactive=True)
@@ -43,13 +39,19 @@ Install like so::
         # Use interactive=False if you run this command in a test (this aggregate and output service logs):
         self.services.startup(interactive=False)
 
-        # During the test you can pause the logging and launch into IPython:
-        self.services.pause()
-
-        # Or you can log a message to the logs
+        # You can log a message to the logs
         self.services.log("Message")
 
-        # Or you can log a warning message to the logs
+        # You can stop the logging and switch to a more interactive mode for debugging
+        self.services.stop_interactive_mode()
+
+        # Launch into ipython...
+        hitchtest.ipython_embed()
+
+        # ...and start it back up again.
+        self.services.start_interactive_mode()
+
+        # You can log a warning message to the logs
         self.serviecs.warn("Warning!")
 
         # You can also make the services think that the system time has changed
@@ -57,9 +59,19 @@ Install like so::
         self.services.time_travel(hours=30)
         self.services.time_travel(days=30)
 
-        # Stop services
+        # Stop services when you are done
         self.services.shutdown()
 
+
+Available prewritten services
+=============================
+
+* HitchCron_
+* HitchSelenium_
+* HitchRedis_
+* HitchDjango_
+* HitchPostgres_
+* HitchCelery_
 
 
 Features
