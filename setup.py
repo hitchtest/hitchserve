@@ -13,7 +13,7 @@ def read(*parts):
     return codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), *parts), 'r').read()
 
 setup(name="hitchserve",
-      version="0.2.1",
+      version="0.2.2",
       description="Service orchestration library for the Hitch testing framework.",
       long_description=read('README.rst'),
       classifiers=[
@@ -38,7 +38,7 @@ setup(name="hitchserve",
       author_email='colm.oconnor.github@gmail.com',
       url='https://hitch.readthedocs.org/',
       license='AGPL',
-      install_requires=['humanize>=0.5.1', 'colorama', 'psutil', 'pyuv', 'tblib', 'faketime', 'hitchenvironment', ],
+      install_requires=['humanize>=0.5.1', 'colorama', 'psutil==2.2.1', 'pyuv', 'tblib', 'faketime', 'hitchenvironment', ],
       packages=find_packages(exclude=[]),
       package_data={},
       zip_safe=False,

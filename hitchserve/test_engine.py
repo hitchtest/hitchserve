@@ -181,9 +181,9 @@ class TestEngine(object):
 
             start_shutdown_time = time.time()
 
-            for child in psutil.Process(os.getppid()).get_children():
+            for child in psutil.Process(os.getppid()).children():
                 if child is not None and child.is_running() and child.pid != os.getpid():
-                    for grandchild in psutil.Process(child.pid).get_children(recursive=True):
+                    for grandchild in psutil.Process(child.pid).children(recursive=True):
                         try:
                             grandchild.send_signal(signal.SIGINT)
                             self.logline("Stopping PID {} : {}".format(grandchild.pid, " ".join(grandchild.cmdline())))
@@ -202,9 +202,9 @@ class TestEngine(object):
                 sleep_time = self.service_bundle.shutdown_timeout - (time.time() - start_shutdown_time)
                 for i in range(0, int(sleep_time * 100)):
                     still_alive = False
-                    for child in psutil.Process(os.getppid()).get_children():
+                    for child in psutil.Process(os.getppid()).children():
                         if child is not None and child.is_running() and child.pid != os.getpid():
-                            for grandchild in psutil.Process(child.pid).get_children(recursive=True):
+                            for grandchild in psutil.Process(child.pid).children(recursive=True):
                                 try:
                                     if grandchild.status != "zombie":
                                         still_alive = True
@@ -215,9 +215,9 @@ class TestEngine(object):
                     time.sleep(0.01)
 
             if still_alive:
-                for child in psutil.Process(os.getppid()).get_children():
+                for child in psutil.Process(os.getppid()).children():
                     if child is not None and child.is_running() and child.pid != os.getpid():
-                        for grandchild in psutil.Process(child.pid).get_children(recursive=True):
+                        for grandchild in psutil.Process(child.pid).children(recursive=True):
                             try:
                                 fullname = " ".join(grandchild.cmdline())
                                 grandchild.send_signal(signal.SIGKILL)

@@ -112,7 +112,7 @@ class ServiceHandle(object):
 
                     # Politely ask all child processes to die first
                     try:
-                        for childproc in psutil.Process(self.process.pid).get_children(recursive=True):
+                        for childproc in psutil.Process(self.process.pid).children(recursive=True):
                             childproc.send_signal(signal.SIGINT)
                     except psutil.NoSuchProcess, AttributeError:
                         pass
@@ -144,7 +144,7 @@ class ServiceHandle(object):
             self.bundle_engine.warnline("{0} did not shut down cleanly, killing.".format(self.service.name))
             try:
                 if hasattr(self.process, 'pid'):
-                    for child in psutil.Process(self.process.pid).get_children(recursive=True):
+                    for child in psutil.Process(self.process.pid).children(recursive=True):
                         os.kill(child.pid, signal.SIGKILL)
                     self.process.kill()
             except psutil.NoSuchProcess:

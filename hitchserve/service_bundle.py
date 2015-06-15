@@ -107,7 +107,7 @@ class ServiceBundle(object):
                 self.log("Shutting down existing test...")
                 old_process = psutil.Process(old_pid)
 
-                for child in old_process.get_children(recursive=True):
+                for child in old_process.children(recursive=True):
                     try:
                         child.send_signal(signal.SIGTERM)
                         child.send_signal(signal.SIGQUIT)
