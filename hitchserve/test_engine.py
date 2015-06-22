@@ -1,6 +1,6 @@
-from service_handle import ServiceHandle
-from service_engine import ServiceEngine
-from hitch_exception import HitchException
+from hitchserve.service_handle import ServiceHandle
+from hitchserve.service_engine import ServiceEngine
+from hitchserve.hitch_exception import HitchException
 from colorama import Fore, Back, Style
 import functools
 import termios
@@ -116,8 +116,8 @@ class TestEngine(object):
             reset_all
         )
         if not self.ipython_on and not self.service_bundle.quiet:
-            self.pipe_stdout.write(full_line)
-        self.pipe_logfile.write(full_line)
+            self.pipe_stdout.write(full_line.encode('utf-8'))
+        self.pipe_logfile.write(full_line.encode('utf-8'))
 
     def logline(self, line, title="Hitch", color=''):
         self.writeline(title, line, color)

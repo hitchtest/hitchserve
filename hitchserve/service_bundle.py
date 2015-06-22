@@ -1,7 +1,7 @@
-from hitch_dir import HitchDir
-from hitch_exception import HitchException
-from hitch_service import Service
-from test_engine import TestEngine
+from hitchserve.hitch_dir import HitchDir
+from hitchserve.hitch_exception import HitchException
+from hitchserve.hitch_service import Service
+from hitchserve.test_engine import TestEngine
 import faketime
 import multiprocessing
 import colorama
@@ -84,12 +84,12 @@ class ServiceBundle(object):
 
     def log(self, message):
         """Print a normal priority message."""
-        sys.stdout.write(message + u'\n')
+        sys.stdout.write("{}\n".format(message).encode('utf-8'))
         sys.stdout.flush()
 
     def warn(self, message):
         """Print a higher priority message."""
-        sys.stderr.write(message + u'\n')
+        sys.stderr.write("{}\n".format(message).encode('utf-8'))
         sys.stderr.flush()
 
     def check_pid(self, pid):
@@ -191,18 +191,19 @@ class ServiceBundle(object):
         self.hijacked_stdout = sys.stdout
         self.hijacked_stderr = sys.stderr
         # 0 must be set as the buffer, otherwise lines won't get logged in time.
-        sys.stdout = open(self.hitch_dir.driverout(), "a", 0)
-        sys.stderr = open(self.hitch_dir.drivererr(), "a", 0)
+        sys.stdout = open(self.hitch_dir.driverout(), "ab", 0)
+        sys.stderr = open(self.hitch_dir.drivererr(), "ab", 0)
 
     def unredirect_stdout(self):
         """Redirect stdout back to stdout."""
-        sys.stdout = self.hijacked_stdout
-        sys.stderr = self.hijacked_stderr
+        if hasattr(self, 'hijacked_stdout') and hasattr(self, 'hijacked_stderr'):
+            sys.stdout = self.hijacked_stdout
+            sys.stderr = self.hijacked_stderr
 
     def start_interactive_mode(self):
         self.messages_to_bundle_engine.put("IPYTHONON")
-        sys.stdout.write(colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL)
-        sys.stderr.write(colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL)
+        sys.stdout.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL).encode("utf-8"))
+        sys.stderr.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL).encode("utf-8"))
         self.unredirect_stdout()
         self.turn_off_signal_handlers()
 
@@ -265,25 +266,26 @@ class ServiceBundle(object):
     def shutdown(self):
         if not self._shutdown_initiated:
             self._shutdown_initiated = True
-            if self._service_process.is_alive():
-                self.messages_to_bundle_engine.put("SHUTDOWN")
-                try:
-                    psutil.Process(self._service_process.pid).wait()
-                except psutil.NoSuchProcess:
-                    pass
+            if hasattr(self, '_service_process'):
+                if self._service_process.is_alive():
+                    self.messages_to_bundle_engine.put("SHUTDOWN")
+                    try:
+                        psutil.Process(self._service_process.pid).wait()
+                    except psutil.NoSuchProcess:
+                        pass
             self.unredirect_stdout()
-
             self.hitch_dir.remove_run_dir()
-            sys.stdout.write(colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL)
-            sys.stderr.write(colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL)
+            sys.stdout.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+            sys.stderr.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
             sys.stdout.flush()
             sys.stderr.flush()
-            try:
-                termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
-            except termios.error as err:
-                # I/O error caused by another test stopping this one
-                if err[0] == 5:
-                    pass
+            if hasattr(self, '_orig_stdin_fileno'):
+                try:
+                    termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
+                except termios.error as err:
+                    # I/O error caused by another test stopping this one
+                    if err[0] == 5:
+                        pass
 
             if self._abort:
                 self.warn("ABORT\n")

@@ -38,12 +38,17 @@ class ServiceHandle(object):
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             try:
-                sys.stdout = open(self.bundle_engine.service_bundle.hitch_dir.setup_out(self.service.name), "a", 0)
-                sys.stderr = open(self.bundle_engine.service_bundle.hitch_dir.setup_err(self.service.name), "a", 0)
+                sys.stdout = open(self.bundle_engine.service_bundle.hitch_dir.setup_out(self.service.name), "ab", 0)
+                sys.stderr = open(self.bundle_engine.service_bundle.hitch_dir.setup_err(self.service.name), "ab", 0)
                 self.service.setup()
-            except Exception, e:
+            except Exception as e:
                 pickling_support.install()
                 self.bundle_engine.messages_to_driver.put(sys.exc_info())
+                #sys.stderr.flush()
+                sys.stderr.write(str(e))
+                #sys.stderr.flush()
+                #sys.stderr.flush()
+                #sys.stdout.flush()
                 self.bundle_engine.warnline("Exception during 'Setup {}'.".format(self.service.name))
 
         self.started = True
@@ -69,6 +74,8 @@ class ServiceHandle(object):
         except Exception as e:
             pickling_support.install()
             self.bundle_engine.messages_to_driver.put(sys.exc_info())
+            sys.stderr.flush()
+            sys.stdout.flush()
             self.bundle_engine.warnline("Exception when starting '{}'.".format(self.service.name))
             return
 
@@ -86,12 +93,14 @@ class ServiceHandle(object):
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             try:
-                sys.stdout = open(self.bundle_engine.service_bundle.hitch_dir.poststart(self.service.name), "a", 0)
-                sys.stderr = open(self.bundle_engine.service_bundle.hitch_dir.poststart_err(self.service.name), "a", 0)
+                sys.stdout = open(self.bundle_engine.service_bundle.hitch_dir.poststart(self.service.name), "ab", 0)
+                sys.stderr = open(self.bundle_engine.service_bundle.hitch_dir.poststart_err(self.service.name), "ab", 0)
                 self.service.poststart()
             except Exception as e:
                 pickling_support.install()
                 self.bundle_engine.messages_to_driver.put(sys.exc_info())
+                sys.stderr.flush()
+                sys.stdout.flush()
                 self.bundle_engine.warnline("Exception during poststart of '{}'.".format(self.service.name))
                 return
         self.poststart_runner = multiprocessing.Process(target=run_poststart)
@@ -114,12 +123,14 @@ class ServiceHandle(object):
                     try:
                         for childproc in psutil.Process(self.process.pid).children(recursive=True):
                             childproc.send_signal(signal.SIGINT)
-                    except psutil.NoSuchProcess, AttributeError:
+                    except psutil.NoSuchProcess:
+                        pass
+                    except AttributeError:
                         pass
 
                     try:
                         self.process.send_signal(self.service.stop_signal)
-                    except OSError, e:
+                    except OSError as e:
                         if e.errno == 3:        # No such process
                             pass
                 else:

@@ -1,4 +1,4 @@
-from hitch_exception import HitchException
+from hitchserve.hitch_exception import HitchException
 import multiprocessing
 import functools
 import signal
@@ -152,7 +152,9 @@ class Tail(object):
                     return True
                 else:
                     return False
-            except ValueError, IndexError:
+            except ValueError:
+                return False
+            except IndexError:
                 return False
 
         def on_match(line):

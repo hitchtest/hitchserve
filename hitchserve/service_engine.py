@@ -1,4 +1,4 @@
-from service_handle import ServiceHandle
+from hitchserve.service_handle import ServiceHandle
 from colorama import Fore
 import time
 
@@ -57,10 +57,10 @@ class ServiceEngine(object):
 
     def handle_input(self, pipe_handle, data):
         service_handle, is_error = self._get_service_from_pipe(pipe_handle)
-        lines = [line for line in data.split('\n') if line != ""]
+        lines = [line for line in data.decode("utf8", "ignore").split('\n') if line != ""]
 
         for line in lines:
-            decoded_line = unicode(line.decode('utf-8', 'ignore')).encode('utf-8')
+            decoded_line = line
 
             if is_error:
                 self.bundle_engine.writeline("Err {0}".format(service_handle.service.name), decoded_line, color=Fore.YELLOW)
