@@ -1,6 +1,7 @@
 from hitchserve.hitch_exception import HitchException
 from hitchserve.hitch_dir import HitchDir
 from hitchserve import service_logs
+from hitchserve.utils import log, warn
 import multiprocessing
 import subprocess
 import faketime
@@ -201,10 +202,10 @@ class Service(object):
         self._command = value
 
     def log(self, line):
-        sys.stdout.write("{}\n".format(line).encode("utf8"))
+        log("{}\n".format(line))
 
     def warn(self, line):
-        sys.stderr.write("{}\n".format(line).encode("utf8"))
+        warn("{}\n".format(line))
 
     def subcommand(self, *args):
         """Get subcommand acting on a service. Subcommand will run in service directory

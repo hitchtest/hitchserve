@@ -1,4 +1,5 @@
 from hitchserve.hitch_exception import HitchException
+from hitchserve.utils import log, warn
 import multiprocessing
 import functools
 import signal
@@ -7,7 +8,6 @@ import pyuv
 import json
 import time
 import os
-import sys
 import re
 
 # TODO: All of this could do with some refactoring.
@@ -61,11 +61,9 @@ class Tail(object):
 
     def _printtuple(self, line):
         if type(line) is tuple:
-            sys.stdout.write("[{}] {}\n".format(line[0].rjust(self.max_length_of_titles), line[1]))
-            sys.stdout.flush()
+            log("[{}] {}\n".format(line[0].rjust(self.max_length_of_titles), line[1]))
         else:
-            sys.stdout.write("{}\n".format(line))
-            sys.stdout.flush()
+            log("{}\n".format(line))
 
     def wait_and_do(self, match_function, do_function, lines_back=0, timeout=None, raise_exception=True):
         self.loop = pyuv.Loop.default_loop()
@@ -185,12 +183,12 @@ class Tail(object):
             lines = self.lines()
             if numlines is not None:
                 lines = lines[len(lines)-numlines:]
-            sys.stdout.write("\n".join(lines))
+            log("\n".join(lines))
         else:
             lines = [self._printtuple(line[0], line[1]) for line in self.lines()]
             if numlines is not None:
                 lines = lines[len(lines)-numlines:]
-            sys.stdout.write("".join(lines))
+            log("".join(lines))
 
 
 class SubLog(object):

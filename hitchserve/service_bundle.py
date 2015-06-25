@@ -2,11 +2,12 @@ from hitchserve.hitch_dir import HitchDir
 from hitchserve.hitch_exception import HitchException
 from hitchserve.hitch_service import Service
 from hitchserve.test_engine import TestEngine
+from hitchserve.utils import log, warn
+from datetime import datetime as python_datetime
+from datetime import timedelta as python_timedelta
 import faketime
 import multiprocessing
 import colorama
-from datetime import datetime as python_datetime
-from datetime import timedelta as python_timedelta
 import subprocess
 import humanize
 import inspect
@@ -24,7 +25,7 @@ class ServiceBundle(object):
     def __init__(self, project_directory, environment, startup_timeout=15.0, shutdown_timeout=5.0, quiet=False):
         environment.match()
         self._shutdown_initiated = False
-        self._abort = False
+        self.aborted = False
         self._services = {}
         self.quiet = quiet
         self.timedelta = python_timedelta(0)
@@ -84,13 +85,11 @@ class ServiceBundle(object):
 
     def log(self, message):
         """Print a normal priority message."""
-        sys.stdout.write("{}\n".format(message).encode('utf-8'))
-        sys.stdout.flush()
+        log(message)
 
     def warn(self, message):
         """Print a higher priority message."""
-        sys.stderr.write("{}\n".format(message).encode('utf-8'))
-        sys.stderr.flush()
+        warn(message)
 
     def check_pid(self, pid):
         try:
@@ -104,14 +103,14 @@ class ServiceBundle(object):
         old_pid = self.hitch_dir.old_pid()
         if old_pid is not None:
             if self.check_pid(old_pid):
-                self.log("Shutting down existing test...")
+                log("Shutting down existing test...\n")
                 old_process = psutil.Process(old_pid)
 
                 for child in old_process.children(recursive=True):
                     try:
                         child.send_signal(signal.SIGTERM)
                         child.send_signal(signal.SIGQUIT)
-                        self.log("Stopping {} (PID {}) : '{}'".format(child.name(), child.pid, ' '.join(child.cmdline())))
+                        log("Stopping {} (PID {}) : '{}'\n".format(child.name(), child.pid, ' '.join(child.cmdline())))
                     except psutil.NoSuchProcess:
                         pass
 
@@ -123,19 +122,19 @@ class ServiceBundle(object):
 
             old_pgids = self.hitch_dir.old_pgids()
             if len(old_pgids) > 0:
-                self.log("Killing off left-over processes from previous test...")
+                log("Killing off left-over processes from previous test...\n")
                 processes = [p for p in psutil.process_iter() if os.getpgid(p.pid) in old_pgids]
 
                 for process in processes:
                     try:
                         process.send_signal(signal.SIGKILL)
-                        self.warn("Killing {} (PID {}) : '{}'".format(process.name(), process.pid, ' '.join(process.cmdline())))
+                        warn("Killing {} (PID {}) : '{}'\n".format(process.name(), process.pid, ' '.join(process.cmdline())))
                     except psutil.NoSuchProcess:
                         pass
 
 
     def startup(self, interactive=True):
-        self.setup_signal_handlers()
+        #self.setup_signal_handlers()
 
 
         self._shutdown_old_processes()
@@ -202,10 +201,12 @@ class ServiceBundle(object):
 
     def start_interactive_mode(self):
         self.messages_to_bundle_engine.put("IPYTHONON")
-        sys.stdout.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL).encode("utf-8"))
-        sys.stderr.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL).encode("utf-8"))
+        #sys.stdout.write(bytes("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL), 'utf8'))
+        #sys.stderr.write(bytes("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL), 'utf8'))
+        log("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+        warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
         self.unredirect_stdout()
-        self.turn_off_signal_handlers()
+        #self.turn_off_signal_handlers()
 
         import fcntl
         # Make stdin blocking - so that redis-cli (among others) can work.
@@ -220,31 +221,46 @@ class ServiceBundle(object):
         if flags & ~os.O_NONBLOCK:
             fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-        self.setup_signal_handlers()
+        #self.setup_signal_handlers()
         self.redirect_stdout()
         self.messages_to_bundle_engine.put("IPYTHONOFF")
 
 
     def setup_signal_handlers(self):
-        def signal_handler(signum, frame):
-            """Catch ctrl-C and SIGTERM. Send them to test engine thread but nowhere else."""
-            self._abort = True
-            # TODO : Received shutdown signal SIGINT
-            self.log("Received signal {}".format(signum))
-            self.shutdown()
+        #def signal_handler(signum, frame):
+            #"""Catch ctrl-C and SIGTERM. Send them to test engine thread but nowhere else."""
+            #self.aborted = True
+            ## TODO : Received shutdown signal SIGINT
+            #log("Received signal {}\n".format(signum))
+            #self.shutdown()
 
-        self._original_sigint = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-        signal.signal(signal.SIGQUIT, signal_handler)
-        signal.signal(signal.SIGHUP, signal_handler)
+        #self._original_sigint = signal.getsignal(signal.SIGINT)
+        #signal.signal(signal.SIGINT, signal_handler)
+        #signal.signal(signal.SIGTERM, signal_handler)
+        #signal.signal(signal.SIGQUIT, signal_handler)
+        #signal.signal(signal.SIGHUP, signal_handler)
+        pass
 
 
     def turn_off_signal_handlers(self):
-        signal.signal(signal.SIGINT, self._original_sigint)
+        #signal.signal(signal.SIGINT, self._original_sigint)
+        pass
 
     def time_travel(self, datetime=None, timedelta=None, seconds=0, minutes=0, hours=0, days=0):
-        """Mock moving forward or backward in time by shifting the system clock fed to the services tested."""
+        """Mock moving forward or backward in time by shifting the system clock fed to the services tested.
+
+        Note that all of these arguments can be used together, individually or not at all. The time
+        traveled to will be the sum of all specified time deltas from datetime. If no datetime is specified,
+        the deltas will be added to the current time.
+
+        Args:
+            datetime (Optional[datetime]): Time travel to specific datetime.
+            timedelta (Optional[timedelta]): Time travel to 'timedelta' from now.
+            seconds (Optional[number]): Time travel 'seconds' seconds from now.
+            minutes (Optional[number]): Time travel 'minutes' minutes from now.
+            hours (Optional[number]): Time travel 'hours' hours from now.
+            days (Optional[number]): Time travel 'days' days from now.
+        """
         if datetime is not None:
             self.timedelta = datetime - python_datetime.now()
         if timedelta is not None:
@@ -253,7 +269,7 @@ class ServiceBundle(object):
         self.timedelta = self.timedelta + python_timedelta(minutes=minutes)
         self.timedelta = self.timedelta + python_timedelta(hours=hours)
         self.timedelta = self.timedelta + python_timedelta(days=days)
-        self.log("Time traveling to {0}".format(humanize.naturaltime(self.now())))
+        log("Time traveling to {}\n".format(humanize.naturaltime(self.now())))
         faketime.change_time(self.hitch_dir.faketime(), self.now())
 
     def now(self):
@@ -273,22 +289,10 @@ class ServiceBundle(object):
                         psutil.Process(self._service_process.pid).wait()
                     except psutil.NoSuchProcess:
                         pass
+
             self.unredirect_stdout()
             self.hitch_dir.remove_run_dir()
-            sys.stdout.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
-            sys.stderr.write("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
-            sys.stdout.flush()
-            sys.stderr.flush()
-            if hasattr(self, '_orig_stdin_fileno'):
-                try:
-                    termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
-                except termios.error as err:
-                    # I/O error caused by another test stopping this one
-                    if err[0] == 5:
-                        pass
-
-            if self._abort:
-                self.warn("ABORT\n")
-
-                # This is necessary to prevent python unittest 'failure' message from kicking in.
-                os.kill(os.getpid(), signal.SIGKILL)
+            log("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+            warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+            if self.aborted:
+                warn("ABORT\n")
