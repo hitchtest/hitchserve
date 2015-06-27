@@ -34,6 +34,20 @@ class TestEngine(object):
         if signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT, signal.SIGINT):
             self.stop()
 
+    def handle_tail(self, fullfilename, title, color, handle, filename, events, error):
+        with open(fullfilename, 'r') as filehandle:
+            filehandle.seek(self.tail_positions[fullfilename])
+            tailportion = filehandle.read()
+        self.tail_positions[fullfilename] = self.tail_positions[fullfilename] + len(tailportion) #os.stat(fullfilename).st_size
+
+        for line in tailportion.split('\n'):
+            if line != "":
+                if color is None:
+                    self.logline(line, title=title)
+                else:
+                    self.logline(line, title=title, color=color)
+
+
     # TODO: Close tail handles after set up / poststart is finished.
     def initiate_tail(self, stdlog, title, color):
         filename = self.service_bundle.hitch_dir.stdlogdir() + os.sep + stdlog
@@ -130,20 +144,6 @@ class TestEngine(object):
             pass
         else:
             self.service_engine.handle_input(pipe_handle, data)
-
-
-    def handle_tail(self, fullfilename, title, color, handle, filename, events, error):
-        with open(fullfilename, 'r') as filehandle:
-            filehandle.seek(self.tail_positions[fullfilename])
-            tailportion = filehandle.read().split('\n')
-        for line in tailportion:
-            if line != "":
-                if color is None:
-                    self.logline(line, title=title)
-                else:
-                    self.logline(line, title=title, color=color)
-
-        self.tail_positions[fullfilename] = os.stat(fullfilename).st_size
 
     def poll_handler(self, timer_handle):
         """Handle messages from the test thread and timeout."""
