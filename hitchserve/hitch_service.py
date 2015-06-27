@@ -218,24 +218,3 @@ class Service(object):
             Subcommand object.
         """
         return Subcommand(*args, directory=self.directory, env_vars=self.env_vars)
-
-    #def run(self, command, shell=False, ignore_errors=False, stdin=False, check_output=False, return_command=False):
-        #"""Run a command for this service."""
-        #self.log(' '.join(command))
-        #try:
-            #kwargs = {
-                #'stderr': sys.stderr,
-                #'stdin': sys.stdin if stdin else None,
-                #'env': self.env_vars,
-                #'shell': shell,
-            #}
-            #if check_output:
-                #return subprocess.check_output(command, **kwargs).decode("utf8")
-            #else:
-                #kwargs['stdout'] = sys.stdout
-                #return subprocess.check_call(command, **kwargs)
-        #except subprocess.CalledProcessError:
-            #if ignore_errors:
-                #pass
-            #else:
-                #raise
