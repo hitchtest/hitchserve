@@ -20,6 +20,7 @@ class ServiceHandle(object):
         self.service = service
         self.started = False
         self.setup_finished = False
+        self.process_started = False
         self.poststart_started = False
         self.poststart_finished = False
         self.ready = False
@@ -66,6 +67,7 @@ class ServiceHandle(object):
                 preexec_fn=os.setpgrp       # Ctrl-C signal is not passed on to the process.
             )
             self.service.pid = self.process.pid
+            self.process_started = True
         except Exception as e:
             pickling_support.install()
             self.bundle_engine.messages_to_driver.put(sys.exc_info())
@@ -138,7 +140,7 @@ class ServiceHandle(object):
             if self.process is None:
                 return True
             else:
-                return self.process.poll() is not None
+                return self.process.poll() is not None or psutil.Process(self.process.pid).status() == 'zombie'
 
     def kill(self):
         """Murder the children of this service in front of it, and then murder the service itself."""

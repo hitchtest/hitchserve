@@ -1,4 +1,5 @@
 from hitchserve.service_handle import ServiceHandle
+from hitchserve.hitch_exception import ServiceSuddenStopException
 from colorama import Fore
 import time
 
@@ -25,9 +26,12 @@ class ServiceEngine(object):
     def _not_started(self):
         return [x for x in self.service_handles if not x.started]
 
-
     def _ready_services(self):
         return [x.service for x in self.service_handles if x.ready]
+
+    def not_ready_services(self):
+        return [x.service for x in self.service_handles if not x.ready]
+
 
     def all_services_ready(self):
         for service_handle in self.service_handles:
@@ -93,6 +97,16 @@ class ServiceEngine(object):
                 for notstartedservice in self._not_started():
                     if set(notstartedservice.service.needs).issubset(set(self._ready_services())):
                         notstartedservice.start_setup()
+
+            # Throw exception if a service suddenly stops.
+            if service_handle.process_started and service_handle.is_dead():
+                self.bundle_engine.messages_to_driver.put(
+                    ServiceSuddenStopException(
+                        "Service '{}' stopped suddenly.".format(
+                            service_handle.service.name
+                        )
+                    )
+                )
 
     def stop(self):
         for service_handle in self.service_handles:
