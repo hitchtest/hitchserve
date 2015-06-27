@@ -164,25 +164,21 @@ class ServiceBundle(object):
 
         what_happened = self.messages_to_driver.get()
 
-
         if what_happened == "READY":
             if interactive:
                 self.start_interactive_mode()
             return
         elif type(what_happened) == tuple and len(what_happened) == 3:
-            self.shutdown()
             if interactive:
                 self.start_interactive_mode()
             six.reraise(*what_happened)
         elif isinstance(what_happened, Exception):
-            self.shutdown()
             if interactive:
                 self.start_interactive_mode()
             raise what_happened
         else:
             if interactive:
                 self.start_interactive_mode()
-            self.shutdown()
             raise HitchException("Unknown exception occurred")
 
     def redirect_stdout(self):
