@@ -1,4 +1,4 @@
-from hitchserve.hitch_exception import HitchException
+from hitchserve.hitch_exception import WaitingForLogMessageTimeout
 from hitchserve.utils import log, warn
 import multiprocessing
 import functools
@@ -113,7 +113,7 @@ class Tail(object):
             self.loop = None
 
         if self.trigger_exception:
-            raise HitchException("Timeout waiting for log line.")
+            raise WaitingForLogMessageTimeout("Timeout waiting for log line.")
         return self._returnval
 
     def follow(self, lines_back=0):

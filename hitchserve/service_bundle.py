@@ -1,5 +1,6 @@
 from hitchserve.hitch_dir import HitchDir
-from hitchserve.hitch_exception import HitchException
+from hitchserve.hitch_exception import BundleMisconfiguration
+from hitchserve.hitch_exception import HitchServeException
 from hitchserve.hitch_service import Service
 from hitchserve.test_engine import TestEngine
 from hitchserve.utils import log, warn
@@ -44,28 +45,28 @@ class ServiceBundle(object):
 
     def __setitem__(self, key, value):
         if not isinstance(value, Service):
-            raise HitchException("'{}' must be of type 'Service'".format(key))
+            raise BundleMisconfiguration("'{}' must be of type 'Service'".format(key))
 
         if "[" in key or "]" in key:
-            raise HitchException("[ and ] characters not allowed in service name")
+            raise BundleMisconfiguration("[ and ] characters not allowed in service name")
 
         if " " in key:
-            raise HitchException("Spaces are not allowed in service names.")
+            raise BundleMisconfiguration("Spaces are not allowed in service names.")
 
         if key in ["Test", "Hitch", "Harness", ]:
-            raise HitchException("{0} is not an allowed service name.".format(key))
+            raise BundleMisconfiguration("{0} is not an allowed service name.".format(key))
         self._services[key] = value
         self._services[key].name = key
         self._services[key].service_group = self
 
         if self._services[key].command is None:
-            raise HitchException("'{}' command must be a list, not {}".format(key, self._services[key].command))
+            raise BundleMisconfiguration("'{}' command must be a list, not {}".format(key, self._services[key].command))
 
         if subprocess.call(["which", self._services[key].command[0]], stdout=subprocess.PIPE) != 0:
-            raise HitchException("'{}' command must call an existing file, not '{}'".format(key, self._services[key].command[0]))
+            raise BundleMisconfiguration("'{}' command must call an existing file, not '{}'".format(key, self._services[key].command[0]))
 
         if not os.path.exists(self._services[key].directory):
-            raise HitchException("'{}' directory '{}' must exist.".format(key, self._services[key].directory))
+            raise BundleMisconfiguration("'{}' directory '{}' must exist.".format(key, self._services[key].directory))
 
     def __repr__(self):
         return str(self._services)
@@ -179,7 +180,7 @@ class ServiceBundle(object):
         else:
             if interactive:
                 self.start_interactive_mode()
-            raise HitchException("Unknown exception occurred")
+            raise HitchServeException("Unknown exception occurred")
 
     def redirect_stdout(self):
         """Redirect stdout to file so that it can be tailed and aggregated with the other logs."""

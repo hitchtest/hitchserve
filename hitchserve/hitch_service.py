@@ -1,4 +1,4 @@
-from hitchserve.hitch_exception import HitchException
+from hitchserve.hitch_exception import ServiceMisconfiguration
 from hitchserve.hitch_dir import HitchDir
 from hitchserve import service_logs
 from hitchserve.utils import log, warn
@@ -61,7 +61,7 @@ class Subcommand(object):
             String if check_output is True, else None.
 
         Raises:
-            HitchServiceException when the command has an error, unless ignore_errors is True.
+            subprocess.CalledProcessError when the command has an error, unless ignore_errors is True.
         """
         os.chdir(self.directory)
         try:
@@ -99,6 +99,9 @@ class Service(object):
             no_libfaketime (Optional[bool]): If True, don't run service with libfaketime. Useful if libfaketime breaks the service.
             env_vars (Optional[dict]): Dictionary of environment variables to feed to the service when running it.
             needs (Optional[List[Service]]): List of services which must be started before this service will run.
+
+        Raises:
+            ServiceMisconfiguration when the wrong parameters are passed.
         """
         self.no_libfaketime = no_libfaketime
         self.directory = directory
@@ -109,25 +112,25 @@ class Service(object):
         self._pid = multiprocessing.Value('i', 0)
 
         if not inspect.isfunction(log_line_ready_checker):
-            raise HitchServiceException(
-                "log_line_ready_checker must be a function that takes a string"
+            raise ServiceMisconfiguration(
+                "log_line_ready_checker must be a function that takes one argument: a string"
             )
 
         if len(inspect.getargspec(log_line_ready_checker).args) != 1:
-            raise HitchServiceException(
+            raise ServiceMisconfiguration(
                 "log_line_ready_checker must take only one argument."
             )
 
         if needs is not None:
             if type(needs) != list:
-                raise HitchServiceException(
-                    "needs must be of type List[Service] or None. needs is not a list or None"
+                raise ServiceMisconfiguration(
+                    "needs must be of type List[Service] or None. You did not pass a list!"
                 )
 
             for need in needs:
                 if not isinstance(need, Service):
-                    raise HitchServiceException(
-                    "needs must be of type List[Service] or None. needs is not a list of services."
+                    raise ServiceMisconfiguration(
+                        "needs must be of type List[Service] or None."
                     )
 
     def setup(self):
