@@ -1,6 +1,6 @@
 from hitchserve.service_handle import ServiceHandle
 from hitchserve.service_engine import ServiceEngine
-from hitchserve.hitch_exception import HitchException
+from hitchserve.hitch_exception import ServiceStartupTimeoutException
 from colorama import Fore, Back, Style
 import functools
 import termios
@@ -169,8 +169,14 @@ class TestEngine(object):
             if time.time() - self.start_time > self.service_bundle.startup_timeout:
                 self.warnline("TIMEOUT")
                 self._timedout = True
-                self.messages_to_driver.put(HitchException("Timeout after {} seconds".format(self.service_bundle.startup_timeout)))
-                self.stop()
+                self.messages_to_driver.put(
+                    ServiceStartupTimeoutException(
+                        "Services not ready after {} second timeout: {}".format(
+                            self.service_bundle.startup_timeout,
+                            ", ".join([x.name for x in self.service_engine.not_ready_services()]),
+                        )
+                    )
+                )
 
 
     def stop(self):
