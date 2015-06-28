@@ -43,6 +43,7 @@ class Tail(object):
         if not self._signal_handle.closed:
             self._signal_handle.close()
             self._signal_handle = None
+        self.loop = None
 
     def _read_callback(self, match_function, do_function, handle, filename, events, error):
         with open(self._logfilename, "r") as filehandle:
@@ -156,7 +157,6 @@ class Tail(object):
                 return False
 
         def on_match(line):
-            #try:
             if type(line) is tuple:
                 self._returnval = json.loads(line[1])
             else:
