@@ -1,3 +1,6 @@
+class HitchException(Exception):
+    pass
+
 class HitchServeException(Exception):
     pass
 
