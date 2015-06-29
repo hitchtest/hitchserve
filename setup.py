@@ -13,7 +13,7 @@ def read(*parts):
     return codecs.open(os.path.join(os.path.abspath(os.path.dirname(__file__)), *parts), 'r').read()
 
 setup(name="hitchserve",
-      version="0.3.6",
+      version="0.3.7",
       description="Service orchestration library for the Hitch testing framework.",
       long_description=read('README.rst'),
       classifiers=[
