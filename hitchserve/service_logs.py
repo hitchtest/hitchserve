@@ -30,7 +30,8 @@ class Tail(object):
 
     def _signal_callback(self, handle, signum):
         """Shutdown tail if ctrl-C is received."""
-        self._close_handles()
+        if signum == signal.SIGINT:
+            self._close_handles()
 
     def _close_handles(self):
         self._closing = True
@@ -43,7 +44,6 @@ class Tail(object):
         if not self._signal_handle.closed:
             self._signal_handle.close()
             self._signal_handle = None
-        self.loop = None
 
     def _read_callback(self, match_function, do_function, handle, filename, events, error):
         with open(self._logfilename, "r") as filehandle:
