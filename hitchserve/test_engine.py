@@ -102,6 +102,8 @@ class TestEngine(object):
         self.signal_h.start(self.signal_cb, signal.SIGTERM)
 
         self.loop.run()
+        self.loop = None
+        os.kill(os.getpid(), signal.SIGKILL)
 
     def _close_pipes(self):
         """Close all the pipes in order to shut the engine down."""
