@@ -222,27 +222,6 @@ class ServiceBundle(object):
         self.redirect_stdout()
         self.messages_to_bundle_engine.put("IPYTHONOFF")
 
-
-    def setup_signal_handlers(self):
-        #def signal_handler(signum, frame):
-            #"""Catch ctrl-C and SIGTERM. Send them to test engine thread but nowhere else."""
-            #self.aborted = True
-            ## TODO : Received shutdown signal SIGINT
-            #log("Received signal {}\n".format(signum))
-            #self.shutdown()
-
-        #self._original_sigint = signal.getsignal(signal.SIGINT)
-        #signal.signal(signal.SIGINT, signal_handler)
-        #signal.signal(signal.SIGTERM, signal_handler)
-        #signal.signal(signal.SIGQUIT, signal_handler)
-        #signal.signal(signal.SIGHUP, signal_handler)
-        pass
-
-
-    def turn_off_signal_handlers(self):
-        #signal.signal(signal.SIGINT, self._original_sigint)
-        pass
-
     def time_travel(self, datetime=None, timedelta=None, seconds=0, minutes=0, hours=0, days=0):
         """Mock moving forward or backward in time by shifting the system clock fed to the services tested.
 
