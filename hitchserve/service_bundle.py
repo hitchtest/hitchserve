@@ -23,8 +23,7 @@ import os
 # TODO : Allow stopping, starting, restarting and waiting until stop/start is finished.
 
 class ServiceBundle(object):
-    def __init__(self, project_directory, environment, startup_timeout=15.0, shutdown_timeout=5.0, quiet=False):
-        environment.match()
+    def __init__(self, project_directory, startup_timeout=15.0, shutdown_timeout=5.0, quiet=False):
         self._shutdown_initiated = False
         self.aborted = False
         self._services = {}
