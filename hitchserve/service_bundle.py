@@ -197,12 +197,9 @@ class ServiceBundle(object):
 
     def start_interactive_mode(self):
         self.messages_to_bundle_engine.put("IPYTHONON")
-        #sys.stdout.write(bytes("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL), 'utf8'))
-        #sys.stderr.write(bytes("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL), 'utf8'))
         log("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
         warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
         self.unredirect_stdout()
-        #self.turn_off_signal_handlers()
 
         import fcntl
         # Make stdin blocking - so that redis-cli (among others) can work.
@@ -217,7 +214,6 @@ class ServiceBundle(object):
         if flags & ~os.O_NONBLOCK:
             fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-        #self.setup_signal_handlers()
         self.redirect_stdout()
         self.messages_to_bundle_engine.put("IPYTHONOFF")
 

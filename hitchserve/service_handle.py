@@ -45,7 +45,6 @@ class ServiceHandle(object):
             except Exception as e:
                 pickling_support.install()
                 self.bundle_engine.messages_to_driver.put(sys.exc_info())
-                self.bundle_engine.warnline("Exception during 'Setup {}'.".format(self.service.name))
 
         self.started = True
         self.setup_runner = multiprocessing.Process(target=run_setup)
@@ -71,7 +70,6 @@ class ServiceHandle(object):
         except Exception as e:
             pickling_support.install()
             self.bundle_engine.messages_to_driver.put(sys.exc_info())
-            self.bundle_engine.warnline("Exception when starting '{}'.".format(self.service.name))
             return
 
         self.bundle_engine.service_bundle.hitch_dir.save_pgid(self.service.name.lower(), os.getpgid(self.process.pid))
@@ -94,8 +92,8 @@ class ServiceHandle(object):
             except Exception as e:
                 pickling_support.install()
                 self.bundle_engine.messages_to_driver.put(sys.exc_info())
-                self.bundle_engine.warnline("Exception during poststart of '{}'.".format(self.service.name))
                 return
+
         self.poststart_runner = multiprocessing.Process(target=run_poststart)
         self.poststart_runner.start()
 
