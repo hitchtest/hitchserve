@@ -201,6 +201,9 @@ class ServiceBundle(object):
         warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
         self.unredirect_stdout()
 
+        # Ensure that termios attributes are left in a sensible state
+        termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
+
         import fcntl
         # Make stdin blocking - so that redis-cli (among others) can work.
         flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
