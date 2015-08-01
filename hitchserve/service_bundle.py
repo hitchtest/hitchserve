@@ -196,29 +196,31 @@ class ServiceBundle(object):
             sys.stderr = self.hijacked_stderr
 
     def start_interactive_mode(self):
-        self.messages_to_bundle_engine.put("IPYTHONON")
-        log("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
-        warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
-        self.unredirect_stdout()
+        if hasattr(self, 'messages_to_bundle_engine'):
+            self.messages_to_bundle_engine.put("IPYTHONON")
+            log("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+            warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+            self.unredirect_stdout()
 
-        # Ensure that termios attributes are left in a sensible state
-        termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
+            # Ensure that termios attributes are left in a sensible state
+            termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
 
-        import fcntl
-        # Make stdin blocking - so that redis-cli (among others) can work.
-        flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-        if flags & os.O_NONBLOCK:
-            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
+            import fcntl
+            # Make stdin blocking - so that redis-cli (among others) can work.
+            flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+            if flags & os.O_NONBLOCK:
+                fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
 
     def stop_interactive_mode(self):
-        # Make stdin non-blocking again
-        import fcntl
-        flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-        if flags & ~os.O_NONBLOCK:
-            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        if hasattr(self, 'messages_to_bundle_engine'):
+            # Make stdin non-blocking again
+            import fcntl
+            flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+            if flags & ~os.O_NONBLOCK:
+                fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-        self.redirect_stdout()
-        self.messages_to_bundle_engine.put("IPYTHONOFF")
+            self.redirect_stdout()
+            self.messages_to_bundle_engine.put("IPYTHONOFF")
 
     def time_travel(self, datetime=None, timedelta=None, seconds=0, minutes=0, hours=0, days=0):
         """Mock moving forward or backward in time by shifting the system clock fed to the services tested.
