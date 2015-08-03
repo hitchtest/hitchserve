@@ -1,10 +1,11 @@
 import os
+import io
 
 def _write(handle, message):
-    if os.isatty(handle.fileno()):
+    if isinstance(handle, io.TextIOWrapper):
         handle.write(message)
     else:
-        handle.write(bytes(message, 'utf8'))
+        handle.write(message.encode('utf8'))
     handle.flush()
 
 def log(message):

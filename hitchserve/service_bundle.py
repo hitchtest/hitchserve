@@ -139,7 +139,14 @@ class ServiceBundle(object):
 
         self._shutdown_old_processes()
 
-        self._orig_stdin_termios = termios.tcgetattr(sys.stdin.fileno())
+        try:
+            self._orig_stdin_termios = termios.tcgetattr(sys.stdin.fileno())
+        except termios.error as e:
+            # Inappropriate ioctl for device -- quiet mode
+            if e.args[0] == 25:
+                self._orig_stdin_termios = None
+            else:
+                raise
         self._orig_stdin_fileno = sys.stdin.fileno()
 
         for service in self.values():
