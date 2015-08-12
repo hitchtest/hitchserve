@@ -135,11 +135,7 @@ class ServiceBundle(object):
 
 
     def startup(self, interactive=True):
-        #self.setup_signal_handlers()
-
-
         self._shutdown_old_processes()
-
         try:
             self._orig_stdin_termios = termios.tcgetattr(sys.stdin.fileno())
         except termios.error as e:
