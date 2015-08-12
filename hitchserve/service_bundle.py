@@ -15,6 +15,7 @@ import inspect
 import termios
 import psutil
 import signal
+import time
 import six
 import sys
 import os
@@ -197,26 +198,38 @@ class ServiceBundle(object):
         sys.stderr = open(self.hitch_dir.drivererr(), "ab", 0)
 
     def unredirect_stdout(self):
-        """Redirect stdout back to stdout."""
+        """Redirect stdout and stderr back to screen."""
         if hasattr(self, 'hijacked_stdout') and hasattr(self, 'hijacked_stderr'):
             sys.stdout = self.hijacked_stdout
             sys.stderr = self.hijacked_stderr
 
     def start_interactive_mode(self):
         if hasattr(self, 'messages_to_bundle_engine'):
+            # Tell bundle engine to stop logging
             self.messages_to_bundle_engine.put("IPYTHONON")
+
+            # Ensure that IPYTHONON message to bundle engine is received (poll handler run every 0.01 secs)
+            time.sleep(0.05)
+
+            # Reset any terminal color changes
             log("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
             warn("{}{}{}".format(colorama.Fore.RESET, colorama.Back.RESET, colorama.Style.RESET_ALL))
+
+            # Stop redirecting test stdout/err to file.
             self.unredirect_stdout()
 
-            # Ensure that termios attributes are left in a sensible state
-            termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
+            # If termios attr of stdin is None, don't do anything to stdin
+            if self._orig_stdin_termios is not None:
+                # Make stdin blocking - so that redis-cli (among others) can work.
+                import fcntl
+                flags = fcntl.fcntl(self._orig_stdin_fileno, fcntl.F_GETFL)
+                if flags & os.O_NONBLOCK:
+                    fcntl.fcntl(self._orig_stdin_fileno, fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
 
-            import fcntl
-            # Make stdin blocking - so that redis-cli (among others) can work.
-            flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-            if flags & os.O_NONBLOCK:
-                fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
+                # Set termios attributes in a sensible state so that the terminal can be used interactively
+                termios.tcsetattr(self._orig_stdin_fileno, termios.TCSANOW, self._orig_stdin_termios)
+            else:
+                warn("\n\n==========> Can't start interactive mode when stdin is redirected to /dev/null\n")
 
     def stop_interactive_mode(self):
         if hasattr(self, 'messages_to_bundle_engine'):
@@ -226,8 +239,14 @@ class ServiceBundle(object):
             if flags & ~os.O_NONBLOCK:
                 fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
+            # Start redirecting test stdout/err to file again, so it can be logged along with other services
             self.redirect_stdout()
+
+            # Tell bundle engine to start logging again
             self.messages_to_bundle_engine.put("IPYTHONOFF")
+
+            # Ensure that IPYTHONOFF message to bundle engine is received (poll handler run every 0.01 secs)
+            time.sleep(0.05)
 
     def time_travel(self, datetime=None, timedelta=None, seconds=0, minutes=0, hours=0, days=0):
         """Mock moving forward or backward in time by shifting the system clock fed to the services tested.
