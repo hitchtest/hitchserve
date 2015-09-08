@@ -59,6 +59,16 @@ class ServiceBundle(object):
         self._services[key].name = key
         self._services[key].service_group = self
 
+        if type(self._services[key].command) is not list:
+            raise BundleMisconfiguration(
+                "'{}' command should be a list of strings - e.g. ['startservice', 'arg1', 'arg2']".format(key)
+            )
+
+        if len([x for x in self._services[key].command if type(x) is str]) < len(self._services[key].command):
+            raise BundleMisconfiguration(
+                "'{}''s command should be a list of strings. Your list contains non-strings.".format(key)
+            )
+
         if self._services[key].command is None:
             raise BundleMisconfiguration("'{}' command must be a list, not {}".format(key, self._services[key].command))
 
