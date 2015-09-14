@@ -146,15 +146,19 @@ class ServiceBundle(object):
 
     def startup(self, interactive=True):
         self._shutdown_old_processes()
-        try:
-            self._orig_stdin_termios = termios.tcgetattr(sys.stdin.fileno())
-        except termios.error as e:
-            # Inappropriate ioctl for device -- quiet mode
-            if e.args[0] == 25:
-                self._orig_stdin_termios = None
-            else:
-                raise
-        self._orig_stdin_fileno = sys.stdin.fileno()
+        if hasattr(sys.stdin, 'fileno'):
+            try:
+                self._orig_stdin_termios = termios.tcgetattr(sys.stdin.fileno())
+            except termios.error as e:
+                # Inappropriate ioctl for device -- quiet mode
+                if e.args[0] == 25:
+                    self._orig_stdin_termios = None
+                else:
+                    raise
+            self._orig_stdin_fileno = sys.stdin.fileno()
+        else:
+            self._orig_stdin_termios = None
+            self._orig_stdin_fileno = None
 
         for service in self.values():
             service.logs.set_logfilename(self.hitch_dir.testlog())
