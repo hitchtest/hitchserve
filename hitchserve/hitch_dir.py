@@ -4,13 +4,16 @@ import sys
 
 
 class HitchDir(object):
-    def __init__(self, project_directory):
+    def __init__(self, project_directory, hitch_dir=None):
         self.project_directory = project_directory
 
         # 3 directories above virtualenv python binary is the hitchdir
-        self.hitch_dir = path.abspath(
-            path.join(path.dirname(sys.executable), "..", "..")
-        )
+        if hitch_dir is None:
+            self.hitch_dir = path.abspath(
+                path.join(path.dirname(sys.executable), "..", "..")
+            )
+        else:
+            self.hitch_dir = hitch_dir
 
     def clean(self):
         if not path.exists(self.hitch_dir):

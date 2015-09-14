@@ -24,14 +24,14 @@ import os
 # TODO : Allow stopping, starting, restarting and waiting until stop/start is finished.
 
 class ServiceBundle(object):
-    def __init__(self, project_directory, startup_timeout=15.0, shutdown_timeout=5.0, quiet=False):
+    def __init__(self, project_directory, startup_timeout=15.0, shutdown_timeout=5.0, hitch_dir=None, quiet=False):
         self._shutdown_initiated = False
         self.aborted = False
         self._services = {}
         self.quiet = quiet
         self.timedelta = python_timedelta(0)
         self.project_directory = os.path.abspath(project_directory)
-        self.hitch_dir = HitchDir(self.project_directory)
+        self.hitch_dir = HitchDir(self.project_directory, hitch_dir=hitch_dir)
         self.startup_timeout = startup_timeout
         self.shutdown_timeout = shutdown_timeout
 
