@@ -12,6 +12,7 @@ import re
 
 # TODO: All of this could do with some refactoring.
 
+
 class Tail(object):
     def __init__(self, sublog):
         self._sublog = sublog
@@ -49,16 +50,13 @@ class Tail(object):
         with open(self._logfilename, "r") as filehandle:
             filehandle.seek(self._end_of_file)
             tailportion = filehandle.read()
+        self._end_of_file = self._end_of_file + len(tailportion)
+
         for line in tailportion.split('\n'):
             matching_line = self._sublog._match_service(line)
             if matching_line is not None:
-                if len(self.titles) == 1:
-                    if match_function(matching_line[1]):
-                        do_function(matching_line)
-                else:
-                    if match_function(matching_line[1]):
-                        do_function(matching_line)
-        self._end_of_file = os.stat(self._logfilename).st_size
+                if match_function(matching_line):
+                    do_function(matching_line)
 
     def _printtuple(self, line):
         if type(line) is tuple:
@@ -85,27 +83,20 @@ class Tail(object):
 
         self._event_handle = pyuv.fs.FSEvent(self.loop)
 
-        if len(self.titles) == 1:
-            self._event_handle.start(self._logfilename, 0,
-                functools.partial(
-                    self._read_callback,
-                    match_function,
-                    do_function,
-                )
+        self._event_handle.start(self._logfilename, 0,
+            functools.partial(
+                self._read_callback,
+                match_function,
+                do_function,
             )
-        else:
-            self._event_handle.start(self._logfilename, 0,
-                functools.partial(
-                    self._read_callback,
-                    match_function,
-                    do_function,
-                )
-            )
+        )
 
         lines = self._sublog.lines()
-        for line in lines[len(lines)-lines_back:]:
+
+        for line in lines[len(lines) - lines_back:]:
             if match_function(line):
                 do_function(line)
+
         if not self._started:
             self._started = True
             self.loop.run()
@@ -126,13 +117,6 @@ class Tail(object):
             raise_exception=False
         )
 
-    def until(self, function, lines_back=0, timeout=None, raise_exception=True):
-        def on_match(line):
-            self._returnval = line[1]
-            self._close_handles()
-
-        return self.wait_and_do(function, on_match, lines_back=lines_back, timeout=timeout, raise_exception=raise_exception)
-
     def grep(self, function, lines_back, timeout=None, raise_exception=False):
         return self.wait_and_do(
             lambda line: function,
@@ -143,24 +127,25 @@ class Tail(object):
         )
 
 
+    def until(self, function, lines_back=0, timeout=None, raise_exception=True):
+        def on_match(line):
+            self._returnval = line[1]
+            self._close_handles()
+
+        return self.wait_and_do(function, on_match, lines_back=lines_back, timeout=timeout, raise_exception=raise_exception)
+
+
     def until_json(self, function, lines_back=0, timeout=None, raise_exception=True):
         def json_match(line):
             try:
-                return_json = json.loads(line)
-                if function(return_json):
-                    return True
-                else:
-                    return False
+                return function(json.loads(line[1]))
             except ValueError:
                 return False
             except IndexError:
                 return False
 
         def on_match(line):
-            if type(line) is tuple:
-                self._returnval = json.loads(line[1])
-            else:
-                self._returnval = json.loads(line)
+            self._returnval = json.loads(line[1])
             self._close_handles()
 
         return self.wait_and_do(json_match, on_match, lines_back=lines_back, timeout=timeout, raise_exception=raise_exception)
@@ -171,10 +156,7 @@ class Tail(object):
             for line in log_handle:
                 matching_line = self._sublog._match_service(line)
                 if matching_line is not None:
-                    if len(self.titles) == 1:
-                        lines.append(matching_line[1])
-                    else:
-                        lines.append(matching_line)
+                    lines.append(matching_line)
         return lines
 
     def cat(self, numlines=None):
@@ -220,10 +202,7 @@ class SubLog(object):
             for line in log_handle:
                 matching_line = self._match_service(line)
                 if matching_line is not None:
-                    if len(self.titles) == 1:
-                        lines.append(matching_line[1])
-                    else:
-                        lines.append(matching_line)
+                    lines.append(matching_line)
         return lines
 
     def __repr__(self):
