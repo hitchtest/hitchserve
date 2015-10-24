@@ -193,6 +193,7 @@ class SubLog(object):
 
     @property
     def tail(self):
+        """Get a Tail object for these logs."""
         return Tail(self)
 
     def lines(self):
@@ -206,10 +207,8 @@ class SubLog(object):
         return lines
 
     def __repr__(self):
-        if len(self.titles) == 1:
-            return "\n".join(self.lines())
-        else:
-            return "\n".join(["[{}] {}".format(title.rjust(self.max_length_of_titles), line) for title, line in self.lines()])
+        """Generate a string representation."""
+        return "\n".join(["[{}] {}".format(title.rjust(self.max_length_of_titles), line) for title, line in self.lines()])
 
     def __str__(self):
         return self.__repr__()
