@@ -84,9 +84,7 @@ class Subcommand(object):
 
 class Service(object):
     """A process to run, monitored and interacted with for the duration of a test."""
-    stop_signal = signal.SIGINT
-
-    def __init__(self, command=None, log_line_ready_checker=None, directory=None, no_libfaketime=False, env_vars=None, needs=None):
+    def __init__(self, command=None, log_line_ready_checker=None, directory=None, no_libfaketime=False, env_vars=None, stop_signal=signal.SIGINT, needs=None):
         """Define and configure a service.
 
         Each service has a command, directory and function which checks
@@ -99,6 +97,7 @@ class Service(object):
             no_libfaketime (Optional[bool]): If True, don't run service with libfaketime. Useful if libfaketime breaks the service.
             env_vars (Optional[dict]): Dictionary of environment variables to feed to the service when running it.
             needs (Optional[List[Service]]): List of services which must be started before this service will run.
+            stop_signal (Optional[int]): First signal to send to service when shutting it down (default: signal.SIGINT).
 
         Raises:
             ServiceMisconfiguration when the wrong parameters are passed.
@@ -109,6 +108,7 @@ class Service(object):
         self.env_vars = {} if env_vars is None else env_vars
         self.needs = needs
         self.log_line_ready_checker = log_line_ready_checker
+        self.stop_signal = stop_signal
         self._pid = multiprocessing.Value('i', 0)
 
         if not inspect.isfunction(log_line_ready_checker):
