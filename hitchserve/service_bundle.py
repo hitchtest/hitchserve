@@ -290,13 +290,17 @@ class ServiceBundle(object):
 
     def pstree(self):
         os.system("pstree -panl {}".format(os.getppid()))
-
-    def connect_to_ipykernel(self, service_name, timeout=10):
-        """Connect to an IPython kernel as soon as its message is logged."""
+        
+    def wait_for_ipykernel(self, service_name, timeout=10):
+        """Wait for an IPython kernel-nnnn.json filename message to appear in log."""
         kernel_line = self._services[service_name].logs.tail.until(
             lambda line: "--existing" in line[1], timeout=10, lines_back=5
         )
-        kernel_json_file = kernel_line.replace("--existing", "").strip()
+        return kernel_line.replace("--existing", "").strip()
+
+    def connect_to_ipykernel(self, service_name, timeout=10):
+        """Connect to an IPython kernel as soon as its message is logged."""
+        kernel_json_file = self.wait_for_ipykernel(service_name, timeout=10)
         self.start_interactive_mode()
         subprocess.check_call([
             sys.executable, "-m", "IPython", "console", "--existing", kernel_json_file
