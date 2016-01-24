@@ -63,6 +63,7 @@ class Subcommand(object):
         Raises:
             subprocess.CalledProcessError when the command has an error, unless ignore_errors is True.
         """
+        previous_directory = os.getcwd()
         os.chdir(self.directory)
         try:
             kwargs = {
@@ -81,6 +82,9 @@ class Subcommand(object):
                 pass
             else:
                 raise
+
+        # Return to previous directory
+        os.chdir(previous_directory)
 
 class Service(object):
     """A process to run, monitored and interacted with for the duration of a test."""
