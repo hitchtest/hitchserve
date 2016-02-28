@@ -3,6 +3,7 @@ from hitchserve.hitch_dir import HitchDir
 from hitchserve import service_logs
 from hitchserve.utils import log, warn
 import multiprocessing
+import commandlib
 import subprocess
 import faketime
 import inspect
@@ -95,7 +96,7 @@ class Service(object):
         each line of the logs to ascertain readiness.
 
         Args:
-            command (List(str)): Sequence of program arguments needed to run the service.
+            command (List(str) or commandlib.Command): Sequence of program arguments needed to run the service.
             log_line_ready_checker (Function[str]): Function which returns True when passed a line which indicates service readiness.
             directory (Optional[str]): Directory the service command is run in. Defaults to project directory specified in service bundle.
             no_libfaketime (Optional[bool]): If True, don't run service with libfaketime. Useful if libfaketime breaks the service.
@@ -106,10 +107,29 @@ class Service(object):
         Raises:
             ServiceMisconfiguration when the wrong parameters are passed.
         """
+        
+        if type(command) is str:
+            raise ServiceMisconfiguration((
+                "Command cannot be string. It must either be "
+                "a list of arguments (strings) or a commandlib.Command object."
+            ))
+        
+        if isinstance(command, commandlib.Command):
+            self.command = command.arguments
+            
+            if env_vars is None:
+                self.env_vars = command.env
+            else:
+                self.env_vars = command.env
+                self.env_vars.update(env_vars)
+            
+            self.directory = str(command.directory) if command.directory is not None else str(directory)
+        else:
+            self.command = [str(arg) for arg in command] if command is not None else command
+            self.env_vars = {} if env_vars is None else env_vars
+            self.directory = directory
+
         self.no_libfaketime = no_libfaketime
-        self.directory = directory
-        self.command = command
-        self.env_vars = {} if env_vars is None else env_vars
         self.needs = needs
         self.log_line_ready_checker = log_line_ready_checker
         self.stop_signal = stop_signal
