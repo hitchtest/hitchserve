@@ -62,6 +62,7 @@ class ServiceHandle(object):
                 bufsize=0,                  # Ensures that all stdout/err is pushed to us immediately.
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE,
                 env=self.service.env_vars,
                 preexec_fn=os.setpgrp       # Ctrl-C signal is not passed on to the process.
             )
